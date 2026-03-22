@@ -2114,6 +2114,11 @@ public:
         }
 
         if (free_compute_buffer_immediately) {
+            // Ensure Metal GPU has finished before freeing buffers.
+            // Without this, async Metal command buffers may still reference
+            // the compute buffer when it's freed, causing stale data on
+            // subsequent graph evaluations (e.g., WAN video diffusion steps).
+            ggml_backend_synchronize(runtime_backend);
             free_compute_buffer();
         }
         return true;
